@@ -1,0 +1,71 @@
+#+TITLE:Tropsha Lab Data Curation Workflow (python)
+
+* Import libraries
+#+BEGIN_SRC ipython :session :exports both :results raw drawer
+import pandas as pd
+
+from rdkit.Chem import PandasTools
+
+#+END_SRC
+
+* Load data
+  - May be .sdf or .csv
+** Load .sdf
+#+BEGIN_SRC ipython :session :exports both :results raw drawer
+  file= "datasets/Beta-Lactamase/Balancing_Withheld_External_v2.sdf"
+
+  def load_sdf(filename):
+      #Caminho do SDF
+      sdfInfo = dict(smilesName='SMILES',molColName='ROMol')
+      moldf = PandasTools.LoadSDF(file,**sdfInfo)
+      print(moldf.shape)
+      #Rename ROMol
+      moldf = moldf.rename(columns={'ROMol': 'Mol'})
+      #duplicatas by smiles
+      moldf = moldf.drop_duplicates(subset=['SMILES'])
+      #logP
+      moldf['logP'] = moldf['Mol'].apply(MolLogP)
+      #Remove moléculas sem esrtutura no RDKit
+      moldf = moldf[pd.notnull(moldf['Mol'])]
+      print(moldf.shape)
+      #Colunas no pandas
+      moldf.keys()
+      return moldf
+#+END_SRC
+** Load .csv
+#+BEGIN_SRC ipython :session :exports both :results raw drawer
+  #location of CSV.gz
+  file= "data/fishes_MOA.csv.gz"
+  moldf = pd.read_csv(file,sep='\t', encoding='utf-8', compression='gzip', quoting=csv.QUOTE_NONNUMERIC)
+  #Add the 'mol' column
+  PandasTools.AddMoleculeColumnToFrame(moldf, smilesCol='SMILES', molCol='Mol', includeFingerprints=False)
+
+  #duplicatas by smiles
+  moldf = moldf.drop_duplicates(subset=['SMILES'])
+  #logP
+  moldf['logP'] = moldf['Mol'].apply(MolLogP)
+  #Remove molecules without structures in RDKit
+  moldf = moldf[pd.notnull(moldf['Mol'])]
+  #Colunas no pandas
+  moldf.keys()
+#+END_SRC
+
+* Convert to canonical smiles
+#+BEGIN_SRC ipython :session :exports both :results raw drawer
+
+#+END_SRC
+
+* Identify and separate mixtures and salts
+#+BEGIN_SRC ipython :session :exports both :results raw drawer
+
+#+END_SRC
+
+* Standardise structures (using standardiser package)
+#+BEGIN_SRC ipython :session :exports both :results raw drawer
+
+#+END_SRC
+
+* Identify and clean duplicates
+#+BEGIN_SRC ipython :session :exports both :results raw drawer
+
+#+END_SRC
