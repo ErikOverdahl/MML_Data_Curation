@@ -1,0 +1,50 @@
+#+TITLE:UNC Eshelman School of Pharmacy Tropsha Lab: Data Curation Workflow
+#+AUTHOR: Erik Overdahl
+
+#+CAPTION: The data curation workflow
+#+BEGIN_SRC plantuml :file tropsha_data_curation_workflow.png :export results
+  (*) --> "Load data from file"
+  --> "Generate structures if necessary"
+  note right
+       If loading a CSV file, structures are
+       generated from the smiles provided.
+  end note
+  --> "Generate canonical smiles"
+  --> "Remove mixtures and salts"
+  --> "Standardise structures"
+  --> "Clean duplicates"
+  note right
+       Duplicates are assessed by structure
+  end note
+  --> (*)
+#+END_SRC
+
+#+RESULTS:
+[[file:tropsha_data_curation_workflow.png]]
+
+
+This is the basic template for the data curation workflow used by the Tropsha Lab to prepare chemical data for model building.
+
+The workflow is written in Python 3 and is provided in the following formats:
+  - a commented IPython notebook
+  - an Org file for use with Emacs
+  - a PDF, for easy sharing and documentation
+The original Knime workflow is *not* provided, as too many dependencies are missing or broken.
+
+* Python dependencies
+  This workflow was written using Python 3.7.1. It has not been tested with Python 2.7, but my assumption is that it will not work.
+  Updated versions of RDKit are available from conda-forge, and are not on PyPi. The Standardiser package is available only on PyPi. Because of this discrepancy, a *requirements.txt* file is not provided with this repo.
+  To install the RDKit package:
+#+BEGIN_EXAMPLE
+conda install -c conda-forge rdkit
+#+END_EXAMPLE
+  To install Standardiser:
+#+BEGIN_EXAMPLE
+pip install standardiser
+#+END_EXAMPLE
+More information about the RDKit can be found [[https://www.rdkit.org/docs/Overview.html][here]]; information about the Standardiser package can be found [[https://github.com/flatkinson/standardiser][here.]]
+
+* Plans for future additions
+  Requests for additions are welcome in the Issues.
+** TODO Explicit virtual environment instructions
+** TODO Provide R code
