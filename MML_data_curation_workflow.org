@@ -35,7 +35,7 @@ Follow the instructions in README.org to ensure that all dependencies are satisf
   from rdkit import Chem
   import standardiser as st
 #+END_SRC
-The nect two libraries are needed only if you need to retrieve data from PubChem or CIR
+The next two libraries are needed only if you need to retrieve data from PubChem or CIR
 #+BEGIN_SRC ipython :session data_curation :results raw drawer :export code
   import pubchempy as pub
   import cirpy

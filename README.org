@@ -2,7 +2,7 @@
 #+AUTHOR: Erik Overdahl
 
 #+CAPTION: The data curation workflow
-#+BEGIN_SRC plantuml :file tropsha_data_curation_workflow.png :export results
+#+BEGIN_SRC plantuml :file tropsha_data_curation_workflow.png :export none
   (*) --> "Load data from file"
   --> "SMILES?"
   "SMILES?" -right->[no] "Retrieve SMILES from PubChem"
@@ -23,7 +23,7 @@
 
 #+RESULTS:
 [[file:tropsha_data_curation_workflow.png]]
-
+[[file:./tropsha_data_curation_workflow.png]]
 
 This is the basic template for the data curation workflow used by the Tropsha Lab to prepare chemical data for model building.
 
