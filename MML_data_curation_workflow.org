@@ -1,0 +1,81 @@
+#+TITLE:MML Data Curation Workflow
+
+* Instructions for running code in Emacs
+  Emacs is a powerful, extensible text editor that provides many nice features for data analysis and programming. This file is built to take advantage of the ability to execute blocks of source code within documents using Emacs' Org-mode.
+  I use the [[https://github.com/gregsexton/ob-ipython][ob-ipython]] package to enable Org-Babel to use the ipython kernel. Add the following to your init file:
+#+BEGIN_SRC emacs-lisp :eval never-export
+  (use-package ob-ipython
+    :ensure t
+    :config
+    (add-hook 'ob-ipython-mode-hookp
+	      (lambda ()
+		(elpy-mode 0)
+		(company-mode 1)))
+    (add-to-list 'company-backends 'company-ob-ipython)
+    (add-hook 'org-babel-after-execute-hook 'org-display-inline-images 'append)
+    )
+#+END_SRC
+You will need to append the location of your ipython installation to Emacs' ~exec-path~ if the location is not on your global path (for example, if you installed Anaconda into your home directory and appended it to your path in your ~.bashrc~).
+#+BEGIN_SRC emacs-lisp :eval never-export
+  (setq exec-path (append exec-path '("/path/to/ipython")))
+#+END_SRC
+And add ipython to the languages available to Org-Babel
+#+BEGIN_SRC emacs-lisp :eval never-export
+     (org-babel-do-load-languages
+      'org-babel-load-languages
+      (append org-babel-load-languages '(ipython . t))
+      )
+#+END_SRC
+If you have issues getting this file to work properly after these steps, consult the GitHub page for ob-ipthon linked above
+
+* Import libraries
+Follow the instructions in README.org to ensure that all dependencies are satisfied
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code
+  import pandas as pd
+  from rdkit import Chem
+  import standardiser as st
+#+END_SRC
+
+* Load data
+  Enter the absolute path to the data below.
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
+  filename = "/path/to/data/file"
+#+END_SRC
+  Data can be loaded as either a CSV or as an SDF.
+  To load an SDF file, it is a good idea to explicitly state which column contains SMILES and which contains structures. Set these variables accordingly.
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
+  smiles_column = 'SMILES'
+  mol_column = 'ROMol'
+  raw_data = Chem.PandasTools.LoadSDF(filename, smilesName=smiles_column, molColName=mol_column)
+  raw_data.rename(columns={smiles_column:'SMILES',mol_column:'Mol'}, inplace=True)
+#+END_SRC
+  When loading a CSV, be careful to select the correct delimiter. If your file does not contain column names, set /header=None/.
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
+  raw_data = pd.read_csv(filename, sep='\t', compression='infer', quoting=csv.QUOTE_NONNUMERIC,header='infer')
+#+END_SRC
+If your data is in an Excel spreadsheet, use the following block instead, setting the arguments appropriately.
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
+  raw_data = pd.read_excel(filename,sheet_name=0,header=0)
+#+END_SRC
+
+* Generate structures
+  If you do not already have structures, execute the following block to generate them from SMILES. If RDKit cannot generate a mol object from a SMILES string, that compound is removed. Compounds that failed to yield mol objects are kept in the ~bad_smiles~ dataframe.
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
+  raw_data['Mol'] = raw_data['SMILES'].map(lambda x: Chem.MolFromSmiles(x))
+  bad_smiles = raw_data.loc[raw_data.Mol.isnull()].reset_index(drop=True)
+  raw_data = raw_data.loc[~raw_data.Mol.isnull()].reset_index(drop=True)
+#+END_SRC
+
+* Convert to canonical SMILES
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
+  raw_data['Can_SMILES'] = raw_data['Mol'].map(lambda x: Chem.MolToSmiles(x))
+#+END_SRC
+
+* Remove mixtures and salts
+
+* Standardise structures
+
+* Clean duplicates
+
+* Export data
+  The data is now ready to be 

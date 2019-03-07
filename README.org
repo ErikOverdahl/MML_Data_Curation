@@ -7,9 +7,9 @@
   --> "Generate structures if necessary"
   note right
        If loading a CSV file, structures are
-       generated from the smiles provided.
+       generated from the SMILES provided.
   end note
-  --> "Generate canonical smiles"
+  --> "Generate canonical SMILES"
   --> "Remove mixtures and salts"
   --> "Standardise structures"
   --> "Clean duplicates"
