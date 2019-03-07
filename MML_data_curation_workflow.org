@@ -35,7 +35,11 @@ Follow the instructions in README.org to ensure that all dependencies are satisf
   from rdkit import Chem
   import standardiser as st
 #+END_SRC
-
+The nect two libraries are needed only if you need to retrieve data from PubChem or CIR
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code
+  import pubchempy as pub
+  import cirpy
+#+END_SRC
 * Load data
   Enter the absolute path to the data below.
 #+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
@@ -57,25 +61,54 @@ If your data is in an Excel spreadsheet, use the following block instead, settin
 #+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
   raw_data = pd.read_excel(filename,sheet_name=0,header=0)
 #+END_SRC
-
-* Generate structures
-  If you do not already have structures, execute the following block to generate them from SMILES. If RDKit cannot generate a mol object from a SMILES string, that compound is removed. Compounds that failed to yield mol objects are kept in the ~bad_smiles~ dataframe.
+Take a quick look to make sure the data has loaded correctly.
 #+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
-  raw_data['Mol'] = raw_data['SMILES'].map(lambda x: Chem.MolFromSmiles(x))
-  bad_smiles = raw_data.loc[raw_data.Mol.isnull()].reset_index(drop=True)
-  raw_data = raw_data.loc[~raw_data.Mol.isnull()].reset_index(drop=True)
+  raw_data.head()
 #+END_SRC
 
-* Convert to canonical SMILES
+* Filling in missing information
+*** TODO Retrieving information from PubChem and CIR
+    Compound information can be retrieved from PubChem using Compound Identifiers (CID), compound names, SMILES, SDFs, inchis or inchikeys, or molecular formula. Using CIDs to retrieve compound information will result in a single Compound object; using other arguments will return a list of matching compounds. CIDs should be used when possible for this reason.
+    CAS numbers can also be used to retrieve data. For this, we use the CIR python module.
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
+  raw_data['SMILES'] = raw_data['CID'].map(lambda x: pub.Compound.from_cid(x).isomeric_smiles)
+#+END_SRC
+
+*** Generating structures
+    If you do not already have structures, execute the following block to generate them from SMILES. If RDKit cannot generate a mol object from a SMILES string, that compound is removed. Compounds that failed to yield mol objects are kept in the ~bad_smiles~ dataframe. Fingerprints are not computed at this step.
+  #+BEGIN_SRC ipython :session data_curation :results raw drawer :export code
+    PandasTools.AddMoleculeColumnToFrame(raw_data,smilesCol='SMILES',molCol='Mol',includeFingerprints=False)
+  #+END_SRC
+  #+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
+    bad_smiles = raw_data.loc[raw_data.Mol.isnull()]
+    raw_data = raw_data.loc[~raw_data.Mol.isnull()]
+  #+END_SRC
+
+* Converting to canonical SMILES
 #+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
   raw_data['Can_SMILES'] = raw_data['Mol'].map(lambda x: Chem.MolToSmiles(x))
 #+END_SRC
+* Standardise structures
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code 
+  def standardise_structure(mol):
+      parent = None
+      try:
+          parent = st.standardise.apply(mol)
+      except st.standardise.StandardiseException as e:
+          print(e.message)
+      return parent
+#+END_SRC
+#+BEGIN_SRC ipython :session data_curation :results raw drawer :export code
+  raw_data['Mol'] = raw_data['Mol'].apply(lambda x: standardise_structure(x))
+#+END_SRC
 
 * Remove mixtures and salts
-
-* Standardise structures
+  The Standardiser module identifies and removes salt fragments from compounds and returns the parents.
 
 * Clean duplicates
+  Two methods are used to identify duplicates.
+  1) Inchikey grouping
+  2) Structure similarity
 
 * Export data
-  The data is now ready to be 
+  The data is now ready to be used in modeling.

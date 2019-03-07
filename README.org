@@ -4,19 +4,21 @@
 #+CAPTION: The data curation workflow
 #+BEGIN_SRC plantuml :file tropsha_data_curation_workflow.png :export results
   (*) --> "Load data from file"
-  --> "Generate structures if necessary"
-  note right
-       If loading a CSV file, structures are
-       generated from the SMILES provided.
-  end note
-  --> "Generate canonical SMILES"
+  --> "SMILES?"
+  "SMILES?" -right->[no] "Retrieve SMILES from PubChem"
+  "SMILES?" -down->[yes] "Structures?"
+  "Retrieve SMILES from PubChem" --> "Structures?"
+  "Structures?" -right->[no] "Generate structures from SMILES"
+  "Generate structures from SMILES" --> "Generate canonical smiles"
+  "Structures?" -down->[yes] "Generate canonical smiles"
   --> "Remove mixtures and salts"
   --> "Standardise structures"
-  --> "Clean duplicates"
-  note right
-       Duplicates are assessed by structure
-  end note
-  --> (*)
+  --> "Clean duplicates by structure"
+  "Clean duplicates by structure" --> "Inchikey grouping"
+  "Clean duplicates by structure" --> "Similarity search"
+  "Inchikey grouping" --> "Curated data"
+  "Similarity search" --> "Curated data"
+  "Curated data" --> (*)
 #+END_SRC
 
 #+RESULTS:
@@ -33,7 +35,7 @@ The original Knime workflow is *not* provided, as too many dependencies are miss
 
 * Python dependencies
   This workflow was written using Python 3.7.1. It has not been tested with Python 2.7, but my assumption is that it will not work.
-  Updated versions of RDKit are available from conda-forge, and are not on PyPi. The Standardiser package is available only on PyPi. Because of this discrepancy, a *requirements.txt* file is not provided with this repo.
+  Updated versions of RDKit are available from conda-forge, and are not on PyPi. The Standardiser package and the CIRpy package are available only on PyPi. Because of this discrepancy, a *requirements.txt* file is not provided with this repo.
   To install the RDKit package:
 #+BEGIN_EXAMPLE
 conda install -c conda-forge rdkit
@@ -44,7 +46,18 @@ pip install standardiser
 #+END_EXAMPLE
 More information about the RDKit can be found [[https://www.rdkit.org/docs/Overview.html][here]]; information about the Standardiser package can be found [[https://github.com/flatkinson/standardiser][here.]]
 
+Missing information about compounds can be retrieved using the PubChemPy and CIRpy modules.
+PubChemPy can be installed with either ~pip~ or ~conda~, while CIRpy can only be installed using ~pip~.
+#+BEGIN_EXAMPLE
+pip install cirpy
+pip install pubchempy
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+conda install -c mcs07 pubchempy
+#+END_EXAMPLE
+
 * Plans for future additions
   Requests for additions are welcome in the Issues.
+** TODO Complete workflow
 ** TODO Explicit virtual environment instructions
 ** TODO Provide R code
